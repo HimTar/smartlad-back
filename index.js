@@ -55,6 +55,12 @@ const loadExpress = () => {
     }
   });
 
+  // status check
+
+  app.get("/status", (req, res) => {
+    res.send("Welcome to Smartlad Server");
+  });
+
   return app;
 };
 
