@@ -7,6 +7,7 @@ const multer = require("multer");
 const userRoute = require("./routes/users");
 const authRoute = require("./routes/auth");
 const postRoute = require("./routes/posts");
+const chatRoute = require("./routes/chat");
 const path = require("path");
 
 dotenv.config();
@@ -34,6 +35,7 @@ const loadExpress = () => {
   app.use("/api/auth", authRoute);
   app.use("/api/users", userRoute);
   app.use("/api/posts", postRoute);
+  app.use("/api/chats", chatRoute);
 
   // multer configuration
 
