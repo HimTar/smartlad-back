@@ -4,11 +4,16 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const { ObjectId } = require("mongodb");
+
 const userRoute = require("./routes/users");
 const authRoute = require("./routes/auth");
 const postRoute = require("./routes/posts");
 const chatRoute = require("./routes/chat");
-const path = require("path");
+
+const Image = require("./models/Image");
 
 dotenv.config();
 
@@ -39,21 +44,77 @@ const loadExpress = () => {
 
   // multer configuration
 
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, "public/images");
-    },
-    filename: (req, file, cb) => {
-      cb(null, req.body.name);
-    },
+  // const storage = multer.diskStorage({
+  //   destination: (req, file, cb) => {
+  //     cb(null, "public/images/temp");
+  //   },
+  // });
+
+  // const upload = multer({ storage: storage });
+
+  // app.post("/api/upload", upload.single("file"), (req, res) => {
+  //   try {
+  //     return res.status(200).json("File uploded successfully");
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // });
+
+  const upload = multer({ dest: "assets/files" });
+
+  app.post("/api/upload", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ status: 400, message: "File not attached !" });
+      }
+
+      console.log(req.file);
+
+      var img = fs.readFileSync(req.file.path);
+      var encode_image = img.toString("base64");
+
+      var finalImg = {
+        contentType: req.file.mimetype,
+        image: new Buffer(encode_image, "base64"),
+      };
+
+      const image = new Image(finalImg);
+
+      const { _id } = await image.save();
+
+      res.status(200).json({
+        status: 200,
+        body: {
+          link: "https://smartlad.herokuapp.com/api/image/" + _id,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({ status: 500, message: "Internal Server Error !" });
+    }
   });
 
-  const upload = multer({ storage: storage });
-  app.post("/api/upload", upload.single("file"), (req, res) => {
+  app.get("/api/image/:id", async (req, res) => {
     try {
-      return res.status(200).json("File uploded successfully");
-    } catch (error) {
-      console.error(error);
+      const id = req.params.id;
+
+      if (!id) {
+        return res
+          .status(400)
+          .json({ status: 400, message: "Image link invalid !" });
+      }
+
+      const data = await Image.findOne({ _id: ObjectId(id) });
+
+      res.contentType("image/jpeg");
+      res.send(data.image);
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({ status: 500, message: "Internal Server Error !" });
     }
   });
 
