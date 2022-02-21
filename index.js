@@ -70,8 +70,6 @@ const loadExpress = () => {
           .json({ status: 400, message: "File not attached !" });
       }
 
-      console.log(req.file);
-
       var img = fs.readFileSync(req.file.path);
       var encode_image = img.toString("base64");
 
@@ -109,7 +107,7 @@ const loadExpress = () => {
 
       const data = await Image.findOne({ _id: ObjectId(id) });
 
-      res.contentType("image/jpeg");
+      res.contentType(data.contentType);
       res.send(data.image);
     } catch (err) {
       console.log(err);

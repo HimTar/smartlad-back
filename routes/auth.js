@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const { ObjectId } = require("mongodb");
 
 //REGISTER
 router.post("/register", async (req, res) => {
@@ -14,6 +15,7 @@ router.post("/register", async (req, res) => {
       username: req.body.username.toLowerCase(),
       email: req.body.email.toLowerCase(),
       password: hashedPassword,
+      role: req.body.role,
     });
 
     //save user and respond
@@ -40,6 +42,61 @@ router.post("/login", async (req, res) => {
     res.status(200).json(user);
   } catch (err) {
     res.status(500).json(err);
+  }
+});
+
+router.get("/get-my-profile", async (req, res) => {
+  try {
+    const { username } = req.query;
+
+    const data = await User.findOne(
+      { username },
+      "-isAdmin -_id -password -__v"
+    ).lean();
+
+    res.send({ userData: data });
+  } catch (err) {
+    res.status(500).json({ message: "something went wrong" });
+  }
+});
+
+router.post("/update-profile", async (req, res) => {
+  try {
+    const { username, tags, profilePicture, coverPicture } = req.body;
+
+    await User.findOneAndUpdate(
+      { username },
+      { tags, profilePicture, coverPicture }
+    );
+
+    res.send({ message: "Profile Updated !" });
+  } catch (err) {
+    res.status(500).json({ message: "something went wrong" });
+  }
+});
+
+router.get("/network/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    let user = await User.findOne({ username }).lean();
+
+    user.followers = user.followers.map((fol) => ObjectId(fol));
+    user.followings = user.followings.map((fol) => ObjectId(fol));
+
+    const followers = await User.find(
+      { _id: { $in: user.followers } },
+      "username profilePicture role tags"
+    ).lean();
+
+    const following = await User.find(
+      { _id: { $in: user.followings } },
+      "username profilePicture role tags"
+    ).lean();
+
+    res.send({ followers, following });
+  } catch (err) {
+    res.status(500).json({ message: "something went wrong" });
   }
 });
 

@@ -20,6 +20,10 @@ const UserSchema = new mongoose.Schema(
       required: true,
       min: 6,
     },
+    role: {
+      type: String,
+      required: true,
+    },
     profilePicture: {
       type: String,
       default: "",
@@ -44,6 +48,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       max: 50,
     },
+    tags: [String],
     city: {
       type: String,
       max: 50,
