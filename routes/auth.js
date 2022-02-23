@@ -51,7 +51,7 @@ router.get("/get-my-profile", async (req, res) => {
 
     const data = await User.findOne(
       { username },
-      "-isAdmin -_id -password -__v"
+      "-isAdmin  -password -__v"
     ).lean();
 
     res.send({ userData: data });
@@ -79,10 +79,15 @@ router.get("/network/:username", async (req, res) => {
   try {
     const { username } = req.params;
 
-    let user = await User.findOne({ username }).lean();
+    let user = await User.findOne(
+      { username },
+      "followers followings tags"
+    ).lean();
 
     user.followers = user.followers.map((fol) => ObjectId(fol));
     user.followings = user.followings.map((fol) => ObjectId(fol));
+
+    const currentNetwork = [...user.followers, ...user.followings, user._id];
 
     const followers = await User.find(
       { _id: { $in: user.followers } },
@@ -94,7 +99,12 @@ router.get("/network/:username", async (req, res) => {
       "username profilePicture role tags"
     ).lean();
 
-    res.send({ followers, following });
+    const suggestion = await User.find(
+      { _id: { $nin: currentNetwork } },
+      "username profilePicture role tags"
+    ).lean();
+
+    res.send({ followers, following, suggestion });
   } catch (err) {
     res.status(500).json({ message: "something went wrong" });
   }

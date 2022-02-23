@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const cors = require("cors");
 const { ObjectId } = require("mongodb");
 
 const userRoute = require("./routes/users");
@@ -31,9 +32,12 @@ const loadExpress = () => {
 
   app.use("/images", express.static(path.join(__dirname, "public/images")));
 
+  app.use(cors());
+
   //middleware
   app.use(express.json());
   app.use(helmet());
+
   app.use(morgan("common"));
 
   // routes
