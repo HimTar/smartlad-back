@@ -6,6 +6,40 @@ const Chat = require("../models/Chat");
 
 // Private Chat Section
 
+// get all friends with chat
+
+router.get("/get-private-chat-list", async (req, res) => {
+  const { username } = req.query;
+  try {
+    let chats = await PrivateChat.find({
+      sender: username,
+    }).lean();
+
+    const filterChats = {};
+
+    chats.map((chat) => {
+      filterChats[chat.receiver] = chat;
+    });
+
+    await Promise.all(
+      Object.keys(filterChats).map(async (key) => {
+        const user = await User.findById(
+          key,
+          "username profilePicture role"
+        ).lean();
+
+        filterChats[key].receiver = user;
+      })
+    );
+
+    chats = Object.keys(filterChats).map((key) => filterChats[key]);
+
+    res.status(200).json({ list: chats });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 // get all chats
 
 router.get("/private", async (req, res) => {
