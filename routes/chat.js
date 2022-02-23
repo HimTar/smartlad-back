@@ -1,8 +1,39 @@
 const router = require("express").Router();
 const Post = require("../models/Post");
 const User = require("../models/User");
+const PrivateChat = require("../models/PrivateChats");
 const Chat = require("../models/Chat");
 
+// Private Chat Section
+
+// get all chats
+
+router.get("/private", async (req, res) => {
+  const { user1, user2 } = req.query;
+  try {
+    const chats = await PrivateChat.find({
+      sender: { $in: [user1, user2] },
+      receiver: { $in: [user1, user2] },
+    }).lean();
+    res.status(200).json({ chats });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// new private chat
+
+router.post("/private", async (req, res) => {
+  const newPost = new PrivateChat(req.body);
+  try {
+    const savedPost = await newPost.save();
+    res.status(200).json(savedPost);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// Group Chat Section
 // new chat
 
 router.post("/", async (req, res) => {
